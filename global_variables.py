@@ -1,5 +1,7 @@
 paused = False
 step = False
+show_osd = True
+show_box = True
 
 frame_timer = 0
 frame_delay = 0.2
@@ -15,5 +17,6 @@ global_player_y = 0
 world_objects = {
     'player': None,
     'enemies': [],
-    'tiles': []
+    'tiles': [],
+    'parallax':{1:[], 2:[], 3:[]}
 }
