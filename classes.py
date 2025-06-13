@@ -198,7 +198,7 @@ class Parallax(Actor):
         elif self.left >= WIDTH:
             self.x -= self.total_width
         if self.auto_scroll:
-            self.x -=  self.force_x
+            self.x -=  self.force_x * 0.5
 
 
 class Camera():
@@ -281,7 +281,7 @@ class Camera():
         self.can_move_right = self.outer_rect.right < g.limit_x
         self.can_move_left = self.outer_rect.left-(-self.offset_x) > 0
         self.can_move_up = self.outer_rect.top-self.offset_y > 0
-        self.can_move_down = self.outer_rect.bottom+(-self.offset_y) < g.limit_y
+        self.can_move_down = self.outer_rect.bottom+(-self.offset_y) < g.limit_y-g.tile_size
 
     def update(self):
         if not self.started:

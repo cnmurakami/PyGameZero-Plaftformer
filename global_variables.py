@@ -12,6 +12,7 @@ offset_y = 0
 limit_x = 0
 limit_y = 0
 tile_size = 64
+background_tile_size = 256
 global_player_x = 0
 global_player_y = 0
 world_objects = {
