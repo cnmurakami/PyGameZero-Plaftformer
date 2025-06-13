@@ -1,16 +1,3 @@
-w = sprites/tiles/terrain_grass_block
-a = sprites/tiles/terrain_grass_horizontal_left
-s = sprites/tiles/terrain_grass_horizontal_middle
-d = sprites/tiles/terrain_grass_horizontal_right
-
-u = sprites/tiles/terrain_grass_block_top_left
-i = sprites/tiles/terrain_grass_block_top
-o = sprites/tiles/terrain_grass_block_top_right
-j = sprites/tiles/terrain_grass_block_left
-k = sprites/tiles/terrain_grass_block_center
-l = sprites/tiles/terrain_grass_block_right
-m = sprites/tiles/terrain_grass_block_bottom_left
-, = sprites/tiles/terrain_grass_block_bottom
-. = sprites/tiles/terrain_grass_block_bottom_right
-
-! = sprites/tiles/lava_top
+terrain = sprites/tiles/terrain_grass_block_
+single_block = sprites/tiles/terrain_grass_horizontal_
+hazard = sprites/tiles/lava

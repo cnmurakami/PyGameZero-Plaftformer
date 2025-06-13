@@ -7,7 +7,7 @@ from watchdog.events import FileSystemEventHandler
 import pygetwindow as gw
 
 WINDOW_POS_FILE = "window_position.txt"
-WATCHED_FILES = ["main.py", "classes.py", "global_variables.py"]  # Files to watch
+WATCHED_FILES = ["main.py", "classes.py", "global_variables.py", 'level_builder.py']  # Files to watch
 SCRIPT_FILE = "main.py"  # The main file to run with pgzrun
 
 # --- Load window position ---
@@ -29,9 +29,9 @@ def save_window_position():
             if win.left != -32000:
                 corrected_x = win.left + BORDER_X
                 corrected_y = win.top + TITLE_BAR_Y
-                with open(WINDOW_POS_FILE, "w") as f:
-                    f.write(f"{corrected_x},{corrected_y}")
-                print(f"Saved window position: {corrected_x},{corrected_y}")
+                # with open(WINDOW_POS_FILE, "w") as f:
+                #     f.write(f"{corrected_x},{corrected_y}")
+                # print(f"Saved window position: {corrected_x},{corrected_y}")
                 return
         print("Game window not found.")
     except Exception as e:

@@ -46,7 +46,7 @@ def build_background(level):
             tile = Parallax(sprite, parallax, (x, pos_y))
 
 
-def get_tile_dict(level):
+def get_tile_sources(level):
     tile_dict = {}
     with open (f'level_data/level_{level}_tiles.txt', 'r') as file:
         for line in file.readlines():
@@ -59,20 +59,80 @@ def get_tile_dict(level):
 
 
 def create_level(level_number, ground_asset, wall_asset=None) -> Player:
-    tile_dict = get_tile_dict(level_number)
-
+    tile_dict = get_tile_sources(level_number)
+    map = []
     with open (f'level_data/level_{level_number}_layout.txt', 'r') as file:
-        block_y = 0
         for line in file.readlines():
-            line = line.strip()
-            for block_x in range(len(line)):
-                pos_x = block_x * g.tile_size
-                pos_y = block_y * g.tile_size
-                if line[block_x] in tile_dict.keys():
-                    tile = Floor(tile_dict[line[block_x]], (pos_x, pos_y))
-                elif line[block_x] == 'p':
-                    player = Player('sprites/characters/right/character_purple', (pos_x, pos_y))
-            block_y += 1
+            map.append(line.strip())
+        
+    for i in range(len(map)):
+        for j in range(len(map[i])):
+            if map[i][j] == 'p':
+                player = Player(g.player_sprite, (j*g.tile_size, i*g.tile_size)) 
+            if map[i][j] == '=':
+                tile = 'center'
+                top_tile = False
+                bottom_tile = False
+                source = tile_dict['terrain']
+                try:
+                    if map[i-1][j] != '=':
+                        top_tile = True
+                except:
+                    pass
+                try:
+                    if map[i+1][j] != '=':
+                        bottom_tile = True
+                except:
+                    pass
+
+                if top_tile and bottom_tile:
+                    source = tile_dict['single_block']
+                    tile = 'middle'
+                    try:
+                        if map[i][j-1] != '=':
+                            tile = 'left'
+                        elif map[i][j+1] != '=':
+                            tile = 'right'
+                    except:
+                        pass
+                else:
+                    if top_tile:
+                        tile = 'top'
+                        try:
+                            if map[i][j-1] != '=':
+                                tile = 'top_left'
+                            elif map[i][j+1] != '=':
+                                tile = 'top_right'
+                        except:
+                            pass
+                    elif bottom_tile:
+                        tile = 'bottom'
+                        try:
+                            if map[i][j-1] != '=':
+                                tile = 'bottom_left'
+                            elif map[i][j+1] != '=':
+                                tile = 'bottom_right'
+                        except:
+                            pass
+                    else:
+                        try:
+                            if map[i][j-1] != '=':
+                                tile = 'left'
+                            elif map[i][j+1] != '=':
+                                tile = 'right'
+                        except:
+                            pass
+                actor = Floor(source+tile, (j*g.tile_size, i*g.tile_size))
+            if map[i][j] == '!':
+                tile = '_top'
+                try:
+                    if map[i-1][j] == '!':
+                        tile = ''
+                except:
+                    pass
+                print(tile)
+                actor = Floor(tile_dict['hazard']+tile, (j*g.tile_size, i*g.tile_size))
+
     define_boundaries(level_number)
     build_background(level_number)
     return player
