@@ -3,15 +3,13 @@ from pgzero.actor import Actor
 from pgzero.builtins import sounds
 from pygame import Rect
 import global_variables as g
-from classes import Player, Enemy, Floor, Parallax, Camera
+from classes import Player, Enemy, Terrain, Parallax, Camera
 
 def define_boundaries(level):
     with open(f'level_data/level_{level}_layout.txt', 'r') as file:
         lines = file.readlines()
         g.limit_x = len(lines[0].strip())*g.tile_size
         g.limit_y = len(lines)*g.tile_size        
-    print(f'x: {g.limit_x}')
-    print(f'y: {g.limit_y}')
     return
 
 def draw_background():
@@ -24,8 +22,6 @@ def build_background(level):
     with open (f'level_data/level_{level}_background.txt', 'r') as file:
         for i in file.readlines():
             sprites.append(i.strip())
-    print('y-limit:',g.limit_y+g.background_tile_size+1, g.background_tile_size)
-    print(g.limit_y - (g.background_tile_size * 2))
     for pos_y in range(-g.background_tile_size, g.limit_y+g.background_tile_size+1, g.background_tile_size):
         for x in range(-g.background_tile_size, g.limit_x+g.background_tile_size+1, g.background_tile_size):
             if pos_y < 0:
@@ -71,6 +67,7 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
                 player = Player(g.player_sprite, (j*g.tile_size, i*g.tile_size)) 
             if map[i][j] == '=':
                 tile = 'center'
+                type = 'ceiling'
                 top_tile = False
                 bottom_tile = False
                 source = tile_dict['terrain']
@@ -88,6 +85,7 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
                 if top_tile and bottom_tile:
                     source = tile_dict['single_block']
                     tile = 'middle'
+                    type = 'floors'
                     try:
                         if map[i][j-1] != '=':
                             tile = 'left'
@@ -98,6 +96,7 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
                 else:
                     if top_tile:
                         tile = 'top'
+                        type = 'floors'
                         try:
                             if map[i][j-1] != '=':
                                 tile = 'top_left'
@@ -107,6 +106,7 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
                             pass
                     elif bottom_tile:
                         tile = 'bottom'
+                        type = 'ceilings'
                         try:
                             if map[i][j-1] != '=':
                                 tile = 'bottom_left'
@@ -115,6 +115,7 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
                         except:
                             pass
                     else:
+                        type = 'walls'
                         try:
                             if map[i][j-1] != '=':
                                 tile = 'left'
@@ -122,7 +123,7 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
                                 tile = 'right'
                         except:
                             pass
-                actor = Floor(source+tile, (j*g.tile_size, i*g.tile_size))
+                actor = Terrain(source+tile, type, (j*g.tile_size, i*g.tile_size))
             if map[i][j] == '!':
                 tile = '_top'
                 try:
@@ -130,8 +131,7 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
                         tile = ''
                 except:
                     pass
-                print(tile)
-                actor = Floor(tile_dict['hazard']+tile, (j*g.tile_size, i*g.tile_size))
+                actor = Terrain(tile_dict['hazard']+tile, 'hazards', (j*g.tile_size, i*g.tile_size))
 
     define_boundaries(level_number)
     build_background(level_number)

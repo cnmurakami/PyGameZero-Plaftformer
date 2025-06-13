@@ -7,7 +7,7 @@ from random import randint
 from pygame import Rect
 
 # local imports
-from classes import Player, Enemy, Floor, Parallax, Camera
+from classes import Player, Enemy, Terrain, Parallax, Camera
 from settings import *
 from level_builder import create_level, draw_background
 import global_variables as g
@@ -76,6 +76,7 @@ def draw():
     screen.fill('pink')
     draw_background()
     for actor in g.world_objects['tiles']:
+        actor.update()
         actor.draw()
     for actor in g.world_objects['enemies']:
         actor.draw()

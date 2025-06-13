@@ -56,9 +56,20 @@ class Player(Actor):
         if direction == 'l':
             movement *= -1
         self.facing_right = direction == 'r'
-        g.global_player_x += movement
-        self.x += movement
-
+        if not self.will_collide(movement, 0):
+            g.global_player_x += movement
+            self.x += movement
+    
+    def will_collide(self, dx, dy):
+        tolerance = 2
+        future_rect = self.get_rect().move(dx, dy)
+        for obj in g.world_objects['walls']+g.world_objects['floors']:
+            if 0 - g.tile_size * 2 > obj.x > WIDTH + g.tile_size *2  or 0 - g.tile_size * 2 > obj.y > HEIGHT + g.tile_size * 2:
+                continue
+            if future_rect.colliderect(obj.get_rect(g.offset_x)):
+                return True
+        return False
+    
     def jump(self):
         if self.grounded:
             sounds.sfx_jump.play()
@@ -95,6 +106,16 @@ class Player(Actor):
                     self.velocity_y = 0
                     self.grounded = True
                     return
+
+                hitting_ceiling = self.y > floor_rect.bottom and self.velocity_y < 0
+                vertical_ceiling_overlap = future_rect.top <= floor_rect.bottom
+                horizontal_ceiling_overlap = horizontal_overlap
+
+                if hitting_ceiling and vertical_ceiling_overlap and horizontal_ceiling_overlap:
+                    self.y = floor_rect.bottom + self.height / 2
+                    g.global_player_y = self.y
+                    self.velocity_y = 0
+                    break
 
             self.y += self.velocity_y
             g.global_player_y = self.y
@@ -170,9 +191,11 @@ class Enemy(Actor):
         g.world_objects['enemies'].append(self)
 
 
-class Floor(Actor):
-    def __init__ (self, sprite, pos:tuple=None):
+class Terrain(Actor):
+    def __init__ (self, sprite, type, pos:tuple=None):
         super().__init__(sprite, pos)
+        self.type = type
+        g.world_objects[type].append(self)
         g.world_objects['tiles'].append(self)
 
     def get_rect(self, offset_x=g.offset_x, offset_y=g.offset_y):
@@ -182,6 +205,22 @@ class Floor(Actor):
             (screen_x - g.tile_size/2, screen_y - g.tile_size/2),
             (g.tile_size, g.tile_size)
         )
+    
+    def update(self):
+        return
+        if 0 > self.x > WIDTH or 0 > self.y > HEIGHT:
+            return
+        player:Player = g.world_objects['player']
+        player_rect = player.get_rect()
+        rect = self.get_rect()
+        is_closer_x = rect.left - g.tile_size*2 < player.x < rect.right + g.tile_size*2
+        is_closer_y = rect.top - g.tile_size*2 < player.y < rect.bottom + g.tile_size*2
+        if is_closer_y and is_closer_x:
+            if player_rect.bottom < rect.top:
+                if player.facing_right and rect.right > player_rect.right > rect.left:
+                    self.image = 'sprites/tiles/block_red'
+                    print(rect.right - player_rect.right)
+                #
 
 class Parallax(Actor):
     def __init__ (self, sprite, level, pos:tuple=None):

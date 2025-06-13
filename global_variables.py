@@ -20,5 +20,9 @@ world_objects = {
     'player': None,
     'enemies': [],
     'tiles': [],
+    'walls': [],
+    'floors': [],
+    'ceilings': [],
+    'hazards': [],
     'parallax':{1:[], 2:[], 3:[]}
 }
