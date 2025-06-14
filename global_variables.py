@@ -15,6 +15,8 @@ tile_size = 64
 background_tile_size = 256
 global_player_x = 0
 global_player_y = 0
+sound = True
+music = True
 player_sprite = 'sprites/characters/right/character_purple'
 world_objects = {
     'player': None,

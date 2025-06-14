@@ -63,8 +63,12 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
         
     for i in range(len(map)):
         for j in range(len(map[i])):
+            placement = (j*g.tile_size, i*g.tile_size)
+            if map[i][j] in tile_dict.keys():
+                tile = Actor(tile_dict[map[i][j]], placement)
+                g.world_objects['tiles'].append(tile)
             if map[i][j] == 'p':
-                player = Player(g.player_sprite, (j*g.tile_size, i*g.tile_size)) 
+                player = Player(g.player_sprite, placement) 
             if map[i][j] == '=':
                 tile = 'center'
                 type = 'ceiling'
@@ -123,7 +127,7 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
                                 tile = 'right'
                         except:
                             pass
-                actor = Terrain(source+tile, type, (j*g.tile_size, i*g.tile_size))
+                actor = Terrain(source+tile, type, placement)
             if map[i][j] == '!':
                 tile = '_top'
                 try:
@@ -131,9 +135,10 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
                         tile = ''
                 except:
                     pass
-                actor = Terrain(tile_dict['hazard']+tile, 'hazards', (j*g.tile_size, i*g.tile_size))
+                actor = Terrain(tile_dict['hazard']+tile, 'hazards', placement)
             if map[i][j] == '1':
-                actor = Enemy_Jumper((j*g.tile_size, i*g.tile_size))
+                actor = Enemy_Jumper(placement)
+            
 
     define_boundaries(level_number)
     build_background(level_number)

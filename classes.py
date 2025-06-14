@@ -56,7 +56,8 @@ class Player(Actor):
             self.image = frames[self.frame_index_move]
             if self.walk_sound_ran >= self.walk_sound_lenght:
                 self.walk_sound_ran = 0
-                sounds.sfx_footsteps.play()
+                if g.sound:
+                    sounds.sfx_footsteps.play()
             self.walk_sound_ran += g.delta_time
         
         movement = self.speed
@@ -81,7 +82,8 @@ class Player(Actor):
         if not self.can_move:
             return
         if self.grounded:
-            sounds.sfx_jump.play()
+            if g.sound:
+                sounds.sfx_jump.play()
             self.velocity_y = self.jump_force
             self.grounded = False
             
@@ -99,7 +101,10 @@ class Player(Actor):
             for obj in g.world_objects['tiles']:
                 if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
                     continue
-                floor_rect = obj.get_rect()
+                try:
+                    floor_rect = obj.get_rect()
+                except:
+                    continue
 
                 falling_from_above = self.y < floor_rect.top and self.velocity_y >= 0
                 vertical_overlap = future_rect.bottom >= floor_rect.top
@@ -142,7 +147,10 @@ class Player(Actor):
             for obj in g.world_objects['tiles']:
                 if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
                     continue
-                floor_rect = obj.get_rect(g.offset_x)
+                try:
+                    floor_rect = obj.get_rect(g.offset_x)
+                except:
+                    continue
                 touching_top = abs(player_rect.bottom - floor_rect.top) <= 2
                 horizontal_overlap = (
                     player_rect.right > floor_rect.left and
@@ -441,7 +449,19 @@ class Terrain(Actor):
             (screen_x - g.tile_size/2, screen_y - g.tile_size/2),
             (g.tile_size, g.tile_size)
         )
-    
+
+class Decoration(Actor):
+    def __init__ (self, sprite, pos:tuple=None):
+        super().__init__(sprite, pos)
+        g.world_objects['tiles'].append(self)
+
+    def get_rect(self, offset_x=g.offset_x, offset_y=g.offset_y):
+        screen_x = self.x - offset_x
+        screen_y = self.y - offset_y
+        return Rect(
+            (screen_x - g.tile_size/2, screen_y - g.tile_size/2),
+            (g.tile_size, g.tile_size)
+        )
 
 class Parallax(Actor):
     def __init__ (self, sprite, level, pos:tuple=None):
@@ -481,6 +501,7 @@ class Camera():
             (WIDTH/3, (HEIGHT - (HEIGHT/1.75)) / 2),
             (WIDTH/3, HEIGHT/1.75)
         )
+        g.world_objects['camera'] = self
 
     def move_camera(self):
         if self.can_move_right and self.player.facing_right:
@@ -554,4 +575,22 @@ class Camera():
         self.offset_stage()
         self.offset_player()
         self.reset_offset()
-        
+
+class Menu():
+    def __init__(self):
+        self.state = 'main'
+        self.sound_image = 'ui/black/audio_'
+        self.music_image = 'ui/black/music_'
+        self.sound_icon = Actor(self.sound_image+'on', (WIDTH/2 + 100, HEIGHT/3*2))
+        self.music_icon = Actor(self.music_image+'on', (WIDTH/2 - 100, HEIGHT/3*2))
+        g.world_objects['menu'] = self
+
+    def update(self):
+        sound_state = 'on' if g.sound else 'off'
+        music_state = 'on' if g.music else 'off'
+        self.sound_icon = Actor(self.sound_image+sound_state, (WIDTH/2 + 100, HEIGHT/3*2))
+        self.music_icon = Actor(self.music_image+music_state, (WIDTH/2 - 100, HEIGHT/3*2))
+
+    def draw(self):
+        self.sound_icon.draw()
+        self.music_icon.draw()

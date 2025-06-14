@@ -1,3 +1,5 @@
 terrain = sprites/tiles/terrain_grass_block_
 single_block = sprites/tiles/terrain_grass_horizontal_
 hazard = sprites/tiles/lava
+> = sprites/tiles/sign_right
+f = sprites/tiles/sign_exit
