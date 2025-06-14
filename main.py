@@ -24,6 +24,8 @@ def on_mouse_down(pos):
             if item.collidepoint(pos):
                 print(item)
                 g.world_objects['tiles'].remove(item)
+        if player.collidepoint(pos):
+            player.get_hurt()
 
 def on_key_down(key):
     if key == keys.P:
@@ -44,6 +46,8 @@ def update(dt):
     g.delta_time = dt
     g.frame_timer += g.delta_time
     player.update()
+    for enemy in g.world_objects['enemies']:
+        enemy.update()
     if keyboard.d:
         player.move('r')
     if keyboard.a:
@@ -71,31 +75,44 @@ def update(dt):
 
     camera.update()
 
+
+
 def draw():
     screen.clear()
     screen.fill('pink')
     draw_background()
     for actor in g.world_objects['tiles']:
-        actor.update()
         actor.draw()
     for actor in g.world_objects['enemies']:
         actor.draw()
     player.draw()
+    screen.blit('sprites/tiles/hud_player_helmet_purple', (20, 20))
+    for i in range(1, 4):
+        img = 'sprites/tiles/hud_heart'
+        if i > player.health:
+            img += '_empty'
+        screen.blit(img, (40*i+40, 20))
     if DEBUG:
         if g.show_osd:
-            screen.draw.text(f'limit: ({g.limit_x}, {g.limit_y})', (10, 10), color = 'black', background=(255,255,255))
-            screen.draw.text(f'Player POS SCREEN: {player.pos}', (10, 30), color = 'black', background=(255,255,255))
-            screen.draw.text(f'Player POS GLOBAL: {(g.global_player_x, g.global_player_y)}', (10, 50), color = 'black', background=(255,255,255))
-            screen.draw.text(f'Facing Right: {player.facing_right}, Moving: {player.is_moving}', (10, 70), color = 'black', background=(255,255,255))
-            if player.grounded:
-                screen.draw.text(f'GROUNDED: {player.grounded}', (10, 90), color = 'black', background=(255,255,255))
-            else:
-                screen.draw.text(f'GROUNDED: {player.grounded}', (10, 90), color = 'red', background=(255,255,255))
-            screen.draw.text(f'CAM Offset: {(camera.offset_x, camera.offset_y)}', (10, 110), color = 'black', background=(255,255,255))
-            screen.draw.text(f'CAM Move: L:{str(camera.can_move_left)[:1]}, R:{str(camera.can_move_right)[:1]}, U:{str(camera.can_move_up)[:1]}, D:{str(camera.can_move_down)[:1]}', (10, 130), color = 'black', background=(255,255,255))
+            debug_msgs = [
+                f'limit: ({g.limit_x}, {g.limit_y})',
+                f'FPS: {1/g.delta_time:.2f}',
+                f'Player POS SCREEN: {player.pos}',
+                f'Player POS GLOBAL: {(g.global_player_x, g.global_player_y)}',
+                f'Facing Right: {player.facing_right}, Moving: {player.is_moving}',
+                f'GROUNDED: {player.grounded}',
+                f'CAM Offset: {(camera.offset_x, camera.offset_y)}',
+                f'CAM Move: l:{str(camera.can_move_left)[:1]}, r:{str(camera.can_move_right)[:1]}, u:{str(camera.can_move_up)[:1]}, d:{str(camera.can_move_down)[:1]}',
+                f'Invincible: {player.invincible}',
+                f'Invisible: {player.invisible}',
+            ]
+            for i in range(1, len(debug_msgs)+1):
+                screen.draw.text(debug_msgs[i-1], (10, i*20), color = 'black', background = 'white')
         if g.show_box:
             screen.draw.rect(player.get_rect(), 'blue')
             for obj in g.world_objects['tiles']:
                 screen.draw.rect(obj.get_rect(g.offset_x), 'green')
+            for obj in g.world_objects['enemies']:
+                screen.draw.rect(obj.get_rect(), 'red')
             screen.draw.rect(camera.outer_rect, 'purple')
             screen.draw.rect(camera.inner_rect, 'purple')
