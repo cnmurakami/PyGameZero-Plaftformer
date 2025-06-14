@@ -57,18 +57,23 @@ def get_tile_sources(level):
 def create_level(level_number, ground_asset, wall_asset=None) -> Player:
     tile_dict = get_tile_sources(level_number)
     map = []
+    player = None
     with open (f'level_data/level_{level_number}_layout.txt', 'r') as file:
         for line in file.readlines():
             map.append(line.strip())
-        
+    
+    for i in range(len(map)):
+        for j in range(len(map[i])):
+            placement = (j*g.tile_size, i*g.tile_size)
+            if map[i][j] == 'p':
+                player = Player(g.player_sprite, placement)
+
     for i in range(len(map)):
         for j in range(len(map[i])):
             placement = (j*g.tile_size, i*g.tile_size)
             if map[i][j] in tile_dict.keys():
                 tile = Actor(tile_dict[map[i][j]], placement)
                 g.world_objects['tiles'].append(tile)
-            if map[i][j] == 'p':
-                player = Player(g.player_sprite, placement) 
             if map[i][j] == '=':
                 tile = 'center'
                 type = 'ceiling'
@@ -135,7 +140,7 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
                         tile = ''
                 except:
                     pass
-                actor = Terrain(tile_dict['hazard']+tile, 'hazards', placement)
+                actor = Terrain(tile_dict['hazard']+tile, 'hazards', placement, player.health)
             if map[i][j] == '1':
                 actor = Enemy_Jumper(placement)
             

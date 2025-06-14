@@ -1,7 +1,7 @@
 from settings import WIDTH, HEIGHT
 from pgzero.actor import Actor
 from pgzero.keyboard import keyboard
-from pgzero.builtins import sounds, clock, animate
+from pgzero.builtins import sounds, clock, animate, music
 from pygame import Rect
 import global_variables as g
 
@@ -69,7 +69,6 @@ class Player(Actor):
             self.x += movement
     
     def will_collide(self, dx, dy):
-        tolerance = 2
         future_rect = self.get_rect().move(dx, dy)
         for obj in g.world_objects['walls']+g.world_objects['floors']:
             if 0 - g.tile_size * 2 > obj.x > WIDTH + g.tile_size *2  or 0 - g.tile_size * 2 > obj.y > HEIGHT + g.tile_size * 2:
@@ -119,6 +118,8 @@ class Player(Actor):
                     self.y = new_y
                     self.velocity_y = 0
                     self.grounded = True
+                    if obj.type == 'hazards':
+                        self.get_hurt(obj.damage, override = True)
                     return
 
                 hitting_ceiling = self.y > floor_rect.bottom and self.velocity_y < 0
@@ -163,57 +164,69 @@ class Player(Actor):
             if not supported:
                 self.grounded = False 
 
-    def is_touching_floor(self):
-        player_rect = self.get_rect()
-        for obj in g.world_objects['tiles']:
-            if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
-                    continue
-            obj_rect = obj.get_rect()
-            if player_rect.right >= obj_rect.left and player_rect.left <= obj_rect.right:
-                if player_rect.bottom >= obj_rect.top and player_rect.bottom - obj_rect.top <= 10:
-                    return obj
-        return None
+    # def is_touching_floor(self):
+    #     print('is_touching_floor')
+    #     player_rect = self.get_rect()
+    #     for obj in g.world_objects['tiles']:
+    #         if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
+    #                 continue
+    #         obj_rect = obj.get_rect()
+    #         if player_rect.right >= obj_rect.left and player_rect.left <= obj_rect.right:
+    #             if player_rect.bottom >= obj_rect.top and player_rect.bottom - obj_rect.top <= 10:
+    #                 return obj
+    #     return None
 
-    def snap_to_floor(self):
-        obj = self.is_touching_floor()
-        if obj:
-            obj_rect = obj.get_rect()
-            self.bottom = obj_rect.top
-            self.grounded = True
+    # def snap_to_floor(self):
+    #     print('snap_to_floor')
+    #     obj = self.is_touching_floor()
+    #     if obj:
+    #         obj_rect = obj.get_rect()
+    #         self.bottom = obj_rect.top
+    #         self.grounded = True
 
-    def check_grounded(self):
-        self.grounded = False
-        px = self.get_rect()
+    # def check_grounded(self):
+    #     self.grounded = False
+    #     px = self.get_rect()
 
-        for obj in g.world_objects['tiles']:
-            if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
-                    continue
-            obj_rect = obj.get_rect()
-            if px.right > obj_rect.left and px.left < obj_rect.right:
-                if abs(px.bottom - obj_rect.top) <= 2:
-                    self.bottom = obj_rect.top
-                    self.grounded = True
-                    self.falling_frames = 0
-                    return
+    #     for obj in g.world_objects['tiles']:
+    #         if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
+    #                 continue
+    #         obj_rect = obj.get_rect()
+    #         if px.right > obj_rect.left and px.left < obj_rect.right:
+    #             if abs(px.bottom - obj_rect.top) <= 2:
+    #                 self.bottom = obj_rect.top
+    #                 self.grounded = True
+    #                 self.falling_frames = 0
+    #                 print(obj.type)
+    #                 if obj.type == 'hazards':
+    #                     print('oi')
+    #                 return
     
-    def get_hurt(self, health_loss = 1, hurt_side = 'r'):
+    def get_hurt(self, health_loss = 1, hurt_side = '', override = False):
+        if override:
+            self.health -= health_loss
+            return
         if not self.invincible:
+            if g.sound:
+                sounds.sfx_hurt.play()
             self.health -= health_loss
             self.invincible = True
             self.can_move = False
             self.is_moving = True
-            clock.schedule_unique(self.recover, 3)
-            clock.schedule_unique(self.can_move_again, 0.5)
-            if hurt_side == 'r':
-                self.turn_around('r')
-                animate(self, duration=0.25, pos = (self.x - g.tile_size*2, self.y))
-                g.global_player_x -= g.tile_size*2
-            else:
-                self.turn_around('l')
-                animate(self, duration=0.25, pos = (self.x + g.tile_size*2, self.y))
-                g.global_player_x += g.tile_size*2
+            if self.health > 0:
+                clock.schedule_unique(self.recover, 3)
+                clock.schedule_unique(self.can_move_again, 0.5)
+                if hurt_side == '':
+                    hurt_side = 'r' if self.facing_right else 'l'
+                if hurt_side == 'r':
+                    self.turn_around('r')
+                    animate(self, duration=0.25, pos = (self.x - g.tile_size*2, self.y))
+                    g.global_player_x -= g.tile_size*2
+                else:
+                    self.turn_around('l')
+                    animate(self, duration=0.25, pos = (self.x + g.tile_size*2, self.y))
+                    g.global_player_x += g.tile_size*2
             self.image = self.sprite+'hit'
-
     
     def hurt_animation(self):
         if self.invincible:
@@ -247,6 +260,30 @@ class Player(Actor):
             self.frame_index_idle = (self.frame_index_idle + 1) % 4
             self.frame_index_move = (self.frame_index_move + 1) % 2
 
+    def check_death(self):
+        if self.health <= 0:
+            return True
+    
+    def death_back_down(self):
+        music.play('game_over')
+        angle = 180 if self.facing_right else -180
+        animate(self, duration = 0.3, tween='accelerate', pos = (self.x, HEIGHT + g.tile_size*2), angle=angle)
+
+    def death_animation(self):
+        if g.sound:
+            sounds.sfx_disappear.play()
+        self.invisible = False
+        self.grounded = False
+        self.can_move = False
+        self.invincible = True
+        self.sprite = g.player_sprite+'_'
+        self.turn_around('r' if self.facing_right else 'l')
+        self.image = self.sprite+'hit'
+        duration = 0.5
+        angle = 180 if self.facing_right else -180
+        clock.schedule(self.death_back_down, duration) # this works
+        animate(self, duration=duration, tween='decelerate', pos = (self.x, g.tile_size*2), angle = angle)
+        
     def update(self):
         self.hurt_animation()
         if not self.invisible:
@@ -363,38 +400,38 @@ class Enemy(Actor):
             if not supported:
                 self.grounded = False 
 
-    def is_touching_floor(self):
-        enemy_rect = self.get_rect()
-        for obj in g.world_objects['tiles']:
-            if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
-                    continue
-            obj_rect = obj.get_rect()
-            if enemy_rect.right >= obj_rect.left and enemy_rect.left <= obj_rect.right:
-                if enemy_rect.bottom >= obj_rect.top and enemy_rect.bottom - obj_rect.top <= 10:
-                    return obj
-        return None
+    # def is_touching_floor(self):
+    #     enemy_rect = self.get_rect()
+    #     for obj in g.world_objects['tiles']:
+    #         if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
+    #                 continue
+    #         obj_rect = obj.get_rect()
+    #         if enemy_rect.right >= obj_rect.left and enemy_rect.left <= obj_rect.right:
+    #             if enemy_rect.bottom >= obj_rect.top and enemy_rect.bottom - obj_rect.top <= 10:
+    #                 return obj
+    #     return None
 
-    def snap_to_floor(self):
-        obj = self.is_touching_floor()
-        if obj:
-            obj_rect = obj.get_rect()
-            self.bottom = obj_rect.top
-            self.grounded = True
+    # def snap_to_floor(self):
+    #     obj = self.is_touching_floor()
+    #     if obj:
+    #         obj_rect = obj.get_rect()
+    #         self.bottom = obj_rect.top
+    #         self.grounded = True
     
-    def check_grounded(self):
-        self.grounded = False
-        px = self.get_rect()
+    # def check_grounded(self):
+    #     self.grounded = False
+    #     px = self.get_rect()
 
-        for obj in g.world_objects['tiles']:
-            if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
-                    continue
-            obj_rect = obj.get_rect()
-            if px.right > obj_rect.left and px.left < obj_rect.right:
-                if abs(px.bottom - obj_rect.top) <= 2:
-                    self.bottom = obj_rect.top
-                    self.grounded = True
-                    self.falling_frames = 0
-                    return
+    #     for obj in g.world_objects['tiles']:
+    #         if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
+    #                 continue
+    #         obj_rect = obj.get_rect()
+    #         if px.right > obj_rect.left and px.left < obj_rect.right:
+    #             if abs(px.bottom - obj_rect.top) <= 2:
+    #                 self.bottom = obj_rect.top
+    #                 self.grounded = True
+    #                 self.falling_frames = 0
+    #                 return
 
     def update_frame_index(self):
         self.frame_timer += g.delta_time
@@ -433,12 +470,13 @@ class Enemy_Jumper(Enemy):
             self.wait_time -= g.delta_time
         super().update_frame_index()
         super().idle()
-            
+
 
 class Terrain(Actor):
-    def __init__ (self, sprite, type, pos:tuple=None):
+    def __init__ (self, sprite, type, pos:tuple=None, damage=0):
         super().__init__(sprite, pos)
         self.type = type
+        self.damage = damage
         g.world_objects[type].append(self)
         g.world_objects['tiles'].append(self)
 
@@ -449,6 +487,7 @@ class Terrain(Actor):
             (screen_x - g.tile_size/2, screen_y - g.tile_size/2),
             (g.tile_size, g.tile_size)
         )
+
 
 class Decoration(Actor):
     def __init__ (self, sprite, pos:tuple=None):
@@ -462,6 +501,7 @@ class Decoration(Actor):
             (screen_x - g.tile_size/2, screen_y - g.tile_size/2),
             (g.tile_size, g.tile_size)
         )
+
 
 class Parallax(Actor):
     def __init__ (self, sprite, level, pos:tuple=None):
@@ -576,6 +616,7 @@ class Camera():
         self.offset_player()
         self.reset_offset()
 
+
 class Menu():
     def __init__(self):
         self.state = 'main'
@@ -584,6 +625,7 @@ class Menu():
         self.sound_icon = Actor(self.sound_image+'on', (WIDTH/2 + 100, HEIGHT/3*2))
         self.music_icon = Actor(self.music_image+'on', (WIDTH/2 - 100, HEIGHT/3*2))
         g.world_objects['menu'] = self
+        self.start_button = Actor
 
     def update(self):
         sound_state = 'on' if g.sound else 'off'
