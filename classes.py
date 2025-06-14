@@ -13,6 +13,7 @@ class Player(Actor):
         self.is_moving = False
         self.grounded = True
         self.facing_right = True
+        self.frame_timer = 0
         self.frame_index_idle = 0
         self.frame_index_move = 0
         self.jump_frame = 0
@@ -51,7 +52,6 @@ class Player(Actor):
             return
         self.is_moving = True
         frames = [self.sprite+'walk_a', self.sprite+'walk_b']
-        
         if self.grounded:
             self.image = frames[self.frame_index_move]
             if self.walk_sound_ran >= self.walk_sound_lenght:
@@ -193,6 +193,7 @@ class Player(Actor):
             self.health -= health_loss
             self.invincible = True
             self.can_move = False
+            self.is_moving = True
             clock.schedule_unique(self.recover, 3)
             clock.schedule_unique(self.can_move_again, 0.5)
             if hurt_side == 'r':
@@ -231,15 +232,19 @@ class Player(Actor):
         else:
             self.sprite = self.sprite.replace('/right/', '/left/')
 
+    def update_frame_index(self):
+        self.frame_timer += g.delta_time
+        if self.frame_timer >= g.frame_delay:
+            self.frame_timer = 0
+            self.frame_index_idle = (self.frame_index_idle + 1) % 4
+            self.frame_index_move = (self.frame_index_move + 1) % 2
+
     def update(self):
         self.hurt_animation()
         if not self.invisible:
             self.turn_around(self)
         self.apply_gravity()
-        if g.frame_timer >= g.frame_delay:
-            g.frame_timer = 0
-            self.frame_index_idle = (self.frame_index_idle + 1) % 4
-            self.frame_index_move = (self.frame_index_move + 1) % 2
+        self.update_frame_index()
         self.idle()
 
 
@@ -249,13 +254,33 @@ class Enemy(Actor):
         self.initial_pos_x = pos[0]
         self.initial_pos_y = pos[1]
         self.sprite = sprite + '_'
+        self.wait_time = 0
+        self.jump_force = 0
+        self.jumping = False
+        self.grounded = True
+        self.gravity = g.gravity
+        self.max_fall_speed = 20
+        self.frame_index_idle = 0
+        self.frame_timer = 0
+        self.velocity_y = 0
+        self.idle_frames = [self.sprite+'idle', self.sprite+'idle_a']
         g.world_objects['enemies'].append(self)
     
+    def idle(self):
+        if self.grounded and not self.jumping:
+            self.image = self.idle_frames[self.frame_index_idle]
+
     def get_rect(self):
         return Rect(
             (self.x - self.width / 4, self.bottom - self.height / 1.5),
             (self.width/2, self.height/1.5)
         )
+
+    def hurt_player(self, damage = 1):
+        player:Player = g.world_objects['player']
+        if self.get_rect().colliderect(player.get_rect()):
+            side = 'r' if player.x < self.x else 'l'
+            player.get_hurt(damage, side)
 
     def jump(self):
         self.velocity_y = self.jump_force
@@ -363,39 +388,43 @@ class Enemy(Actor):
                     self.falling_frames = 0
                     return
 
-
+    def update_frame_index(self):
+        self.frame_timer += g.delta_time
+        if self.frame_timer >= g.frame_delay:
+            self.frame_timer = 0
+            self.frame_index_idle = (self.frame_index_idle + 1) % len(self.idle_frames)
 
 
 class Enemy_Jumper(Enemy):
     def __init__ (self, pos):
         super().__init__(sprite='sprites/enemies/frog', pos=pos)
         self.wait_time = 3
-        self.max_height = 300
         self.jump_force = -22
         self.jumping = False
         self.grounded = True
         self.gravity = 1.1
         self.max_fall_speed = 20
-
-    def back_down(self):
-        animate(self, tween='decelerate', duration=1, pos = (self.x, self.y+self.max_height))
-        self.wait_time = 3
+        self.frame_index_idle = 0
+        self.frame_timer = 0
+        self.velocity_y = 0
+        self.idle_frames = [self.sprite+'idle', self.sprite+'idle_a']
+        
+    def jump(self):
+        super().jump()
         self.jumping = False
 
-    def hurt_player(self):
-        player:Player = g.world_objects['player']
-        if self.get_rect().colliderect(player.get_rect()):
-            side = 'r' if player.x < self.x else 'l'
-            player.get_hurt(hurt_side=side)
-    
     def update(self):
-        self.hurt_player()
-        self.apply_gravity()
+        super().hurt_player()
+        super().apply_gravity()
         if self.wait_time <= 0:
-            if self.grounded:
-                self.jump()
+            if self.grounded and not self.jumping:
+                self.jumping = True
+                self.image = self.sprite+'jump_a'
+                clock.schedule_unique(self.jump, 1)
         else:
             self.wait_time -= g.delta_time
+        super().update_frame_index()
+        super().idle()
             
 
 class Terrain(Actor):

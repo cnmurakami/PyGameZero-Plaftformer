@@ -44,7 +44,6 @@ def update(dt):
     if g.paused and not g.step:
         return
     g.delta_time = dt
-    g.frame_timer += g.delta_time
     player.update()
     for enemy in g.world_objects['enemies']:
         enemy.update()
