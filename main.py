@@ -57,7 +57,6 @@ def on_mouse_down(pos):
                 if item.collidepoint(pos):
                     print(item.type)
                     print(item.damage)
-                    #g.world_objects['tiles'].remove(item)
             if g.world_objects['player'].collidepoint(pos):
                 g.world_objects['player'].get_hurt(3)
         except:
@@ -154,23 +153,6 @@ def draw():
         screen.draw.text('ZERO PLATFORMER\nGAME DEMO', centerx=WIDTH/2, centery=HEIGHT/4, fontsize=120, color = 'black')
         start_button.draw()
         menu.draw()
-    # if state == 'game_over':
-    #     screen.clear()
-    #     draw_background()
-    #     for actor in g.world_objects['tiles']:
-    #         actor.draw()
-    #     for actor in g.world_objects['enemies']:
-    #         actor.draw()
-    #     g.world_objects['player'].draw()
-    #     screen.blit('sprites/tiles/hud_player_helmet_purple', (20, 20))
-    #     for i in range(1, 4):
-    #         img = 'sprites/tiles/hud_heart'
-    #         if i > g.world_objects['player'].health:
-    #             img += '_empty'
-    #         screen.blit(img, (40*i+40, 20))
-    #     screen.draw.text('GAME OVER', centerx=WIDTH/2, centery=HEIGHT/4, fontsize=120, color = 'black')
-    #     restart_button.draw()
-    #     menu.draw()
     if state in ['running', 'paused', 'game_over'] and state_ready:
         screen.clear()
         draw_background()

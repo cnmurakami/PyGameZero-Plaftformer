@@ -3,7 +3,7 @@ from pgzero.actor import Actor
 from pgzero.builtins import sounds
 from pygame import Rect
 import global_variables as g
-from classes import Player, Enemy_Jumper, Terrain, Parallax
+from classes import Player, Enemy_Jumper, Terrain, Parallax, Enemy_Walker
 
 def define_boundaries(level):
     with open(f'level_data/level_{level}_layout.txt', 'r') as file:
@@ -142,8 +142,9 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
                     pass
                 actor = Terrain(tile_dict['hazard']+tile, 'hazards', placement, player.health)
             if map[i][j] == '1':
-                actor = Enemy_Jumper(placement)
-            
+                actor = Enemy_Jumper(pos = placement)
+            if map[i][j] == '2':
+                actor = Enemy_Walker(pos = placement)
 
     define_boundaries(level_number)
     build_background(level_number)

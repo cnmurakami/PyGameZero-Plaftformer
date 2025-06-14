@@ -47,8 +47,8 @@ class Player(Actor):
         else:
             self.image = self.sprite + 'jump'
 
-    def move(self, direction):
-        if not self.can_move:
+    def move(self, direction, override = False):
+        if not self.can_move and not override:
             return
         self.is_moving = True
         frames = [self.sprite+'walk_a', self.sprite+'walk_b']
@@ -56,24 +56,29 @@ class Player(Actor):
             self.image = frames[self.frame_index_move]
             if self.walk_sound_ran >= self.walk_sound_lenght:
                 self.walk_sound_ran = 0
-                if g.sound:
+                if g.sound and not override:
                     sounds.sfx_footsteps.play()
             self.walk_sound_ran += g.delta_time
         
         movement = self.speed
         if direction == 'l':
             movement *= -1
-        self.facing_right = direction == 'r'
+        if not override:
+            self.facing_right = direction == 'r'
         if not self.will_collide(movement, 0):
             g.global_player_x += movement
             self.x += movement
     
     def will_collide(self, dx, dy):
         future_rect = self.get_rect().move(dx, dy)
-        for obj in g.world_objects['walls']+g.world_objects['floors']:
-            if 0 - g.tile_size * 2 > obj.x > WIDTH + g.tile_size *2  or 0 - g.tile_size * 2 > obj.y > HEIGHT + g.tile_size * 2:
+        buffer = g.tile_size * 2
+
+        for obj in g.world_objects['walls'] + g.world_objects['floors']:
+            if abs(obj.x - self.x) > buffer or abs(obj.y - self.y) > buffer:
                 continue
-            if future_rect.colliderect(obj.get_rect(g.offset_x)):
+
+            obj_rect = obj.get_rect(g.offset_x)
+            if future_rect.colliderect(obj_rect):
                 return True
         return False
     
@@ -99,6 +104,8 @@ class Player(Actor):
 
             for obj in g.world_objects['tiles']:
                 if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
+                    continue
+                if type(obj) == Decoration:
                     continue
                 try:
                     floor_rect = obj.get_rect()
@@ -148,6 +155,8 @@ class Player(Actor):
             for obj in g.world_objects['tiles']:
                 if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
                     continue
+                if type(obj) == Decoration:
+                    continue
                 try:
                     floor_rect = obj.get_rect(g.offset_x)
                 except:
@@ -164,43 +173,6 @@ class Player(Actor):
             if not supported:
                 self.grounded = False 
 
-    # def is_touching_floor(self):
-    #     print('is_touching_floor')
-    #     player_rect = self.get_rect()
-    #     for obj in g.world_objects['tiles']:
-    #         if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
-    #                 continue
-    #         obj_rect = obj.get_rect()
-    #         if player_rect.right >= obj_rect.left and player_rect.left <= obj_rect.right:
-    #             if player_rect.bottom >= obj_rect.top and player_rect.bottom - obj_rect.top <= 10:
-    #                 return obj
-    #     return None
-
-    # def snap_to_floor(self):
-    #     print('snap_to_floor')
-    #     obj = self.is_touching_floor()
-    #     if obj:
-    #         obj_rect = obj.get_rect()
-    #         self.bottom = obj_rect.top
-    #         self.grounded = True
-
-    # def check_grounded(self):
-    #     self.grounded = False
-    #     px = self.get_rect()
-
-    #     for obj in g.world_objects['tiles']:
-    #         if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
-    #                 continue
-    #         obj_rect = obj.get_rect()
-    #         if px.right > obj_rect.left and px.left < obj_rect.right:
-    #             if abs(px.bottom - obj_rect.top) <= 2:
-    #                 self.bottom = obj_rect.top
-    #                 self.grounded = True
-    #                 self.falling_frames = 0
-    #                 print(obj.type)
-    #                 if obj.type == 'hazards':
-    #                     print('oi')
-    #                 return
     
     def get_hurt(self, health_loss = 1, hurt_side = '', override = False):
         if override:
@@ -218,14 +190,17 @@ class Player(Actor):
                 clock.schedule_unique(self.can_move_again, 0.5)
                 if hurt_side == '':
                     hurt_side = 'r' if self.facing_right else 'l'
+                original_speed = self.speed
+                self.speed = self.speed*20
                 if hurt_side == 'r':
                     self.turn_around('r')
-                    animate(self, duration=0.25, pos = (self.x - g.tile_size*2, self.y))
-                    g.global_player_x -= g.tile_size*2
+                    self.move('l', override = True)
+                    
                 else:
                     self.turn_around('l')
-                    animate(self, duration=0.25, pos = (self.x + g.tile_size*2, self.y))
+                    self.move('r', override = True)
                     g.global_player_x += g.tile_size*2
+                self.speed = original_speed
             self.image = self.sprite+'hit'
     
     def hurt_animation(self):
@@ -281,7 +256,7 @@ class Player(Actor):
         self.image = self.sprite+'hit'
         duration = 0.5
         angle = 180 if self.facing_right else -180
-        clock.schedule(self.death_back_down, duration) # this works
+        clock.schedule(self.death_back_down, duration)
         animate(self, duration=duration, tween='decelerate', pos = (self.x, g.tile_size*2), angle = angle)
         
     def update(self):
@@ -303,15 +278,18 @@ class Enemy(Actor):
         self.jump_force = 0
         self.jumping = False
         self.grounded = True
+        self.facing_right = False
+        self.speed = 0
         self.gravity = g.gravity
         self.max_fall_speed = 20
         self.frame_index_idle = 0
+        self.frames = ['idle', 'idle_a']
         self.frame_timer = 0
         self.velocity_y = 0
-        self.idle_frames = [self.sprite+'idle', self.sprite+'idle_a']
         g.world_objects['enemies'].append(self)
     
     def idle(self):
+        self.idle_frames = [self.sprite+x for x in self.frames]
         if self.grounded and not self.jumping:
             self.image = self.idle_frames[self.frame_index_idle]
 
@@ -327,6 +305,13 @@ class Enemy(Actor):
             side = 'r' if player.x < self.x else 'l'
             player.get_hurt(damage, side)
 
+    def turn_around(self, forced=None):
+        self.facing_right = True if forced == 'r' else False if forced == 'l' else self.facing_right
+        if self.facing_right:
+            self.sprite = self.sprite.replace('/left/', '/right/')
+        else:
+            self.sprite = self.sprite.replace('/right/', '/left/')
+        
     def jump(self):
         self.velocity_y = self.jump_force
         self.image = self.sprite+'jump'
@@ -345,6 +330,8 @@ class Enemy(Actor):
 
             for obj in g.world_objects['tiles']:
                 if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
+                    continue
+                if type(obj) == Decoration:
                     continue
                 floor_rect = obj.get_rect()
 
@@ -387,6 +374,8 @@ class Enemy(Actor):
             for obj in g.world_objects['tiles']:
                 if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
                     continue
+                if type(obj) == Decoration:
+                    continue
                 floor_rect = obj.get_rect(g.offset_x)
                 touching_top = abs(enemy_rect.bottom - floor_rect.top) <= 2
                 horizontal_overlap = (
@@ -400,49 +389,58 @@ class Enemy(Actor):
             if not supported:
                 self.grounded = False 
 
-    # def is_touching_floor(self):
-    #     enemy_rect = self.get_rect()
-    #     for obj in g.world_objects['tiles']:
-    #         if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
-    #                 continue
-    #         obj_rect = obj.get_rect()
-    #         if enemy_rect.right >= obj_rect.left and enemy_rect.left <= obj_rect.right:
-    #             if enemy_rect.bottom >= obj_rect.top and enemy_rect.bottom - obj_rect.top <= 10:
-    #                 return obj
-    #     return None
+    def will_collide(self, dx, dy):
+        future_rect = self.get_rect().move(dx, dy)
+        buffer = g.tile_size * 2
 
-    # def snap_to_floor(self):
-    #     obj = self.is_touching_floor()
-    #     if obj:
-    #         obj_rect = obj.get_rect()
-    #         self.bottom = obj_rect.top
-    #         self.grounded = True
-    
-    # def check_grounded(self):
-    #     self.grounded = False
-    #     px = self.get_rect()
+        for obj in g.world_objects['walls'] + g.world_objects['floors']:
+            if abs(obj.x - self.x) > buffer or abs(obj.y - self.y) > buffer:
+                continue
 
-    #     for obj in g.world_objects['tiles']:
-    #         if not obj.x - g.tile_size*2 < self.x < obj.x + g.tile_size*2:
-    #                 continue
-    #         obj_rect = obj.get_rect()
-    #         if px.right > obj_rect.left and px.left < obj_rect.right:
-    #             if abs(px.bottom - obj_rect.top) <= 2:
-    #                 self.bottom = obj_rect.top
-    #                 self.grounded = True
-    #                 self.falling_frames = 0
-    #                 return
+            obj_rect = obj.get_rect(g.offset_x)
+            if future_rect.colliderect(obj_rect):
+                return True
+        return False
+
+    def is_ground_ahead(self):
+        direction = 1 if self.facing_right else -1
+        step_distance = g.tile_size // 2
+
+        probe_x = self.x + direction * step_distance
+        probe_y = self.y + self.height / 2 + 1
+        probe_rect = Rect((probe_x - 1, probe_y), (2, 2))
+
+        buffer = g.tile_size * 2
+
+        for tile in g.world_objects['tiles']:
+            if isinstance(tile, Decoration):
+                continue
+            if abs(tile.x - probe_x) > buffer or abs(tile.y - probe_y) > buffer:
+                continue
+            if probe_rect.colliderect(tile.get_rect()):
+                return True
+        return False
 
     def update_frame_index(self):
         self.frame_timer += g.delta_time
         if self.frame_timer >= g.frame_delay:
             self.frame_timer = 0
-            self.frame_index_idle = (self.frame_index_idle + 1) % len(self.idle_frames)
+            self.frame_index_idle = (self.frame_index_idle + 1) % len(self.frames)
 
+    def is_visible(self):
+        return -g.tile_size < self.x < WIDTH+g.tile_size and -g.tile_size*2 < self.y < HEIGHT+g.tile_size*2
+
+    def update(self):
+        if not self.is_visible():
+            return
+        self.hurt_player()
+        self.turn_around()
+        self.update_frame_index()
+        self.idle()
 
 class Enemy_Jumper(Enemy):
-    def __init__ (self, pos):
-        super().__init__(sprite='sprites/enemies/frog', pos=pos)
+    def __init__ (self, sprite = 'sprites/enemies/left/frog', pos = (WIDTH/2, HEIGHT/2)):
+        super().__init__(sprite, pos=pos)
         self.wait_time = 3
         self.jump_force = -22
         self.jumping = False
@@ -452,15 +450,14 @@ class Enemy_Jumper(Enemy):
         self.frame_index_idle = 0
         self.frame_timer = 0
         self.velocity_y = 0
-        self.idle_frames = [self.sprite+'idle', self.sprite+'idle_a']
         
     def jump(self):
         super().jump()
         self.jumping = False
 
     def update(self):
-        super().hurt_player()
-        super().apply_gravity()
+        if not super().is_visible():
+            return
         if self.wait_time <= 0:
             if self.grounded and not self.jumping:
                 self.jumping = True
@@ -468,10 +465,29 @@ class Enemy_Jumper(Enemy):
                 clock.schedule_unique(self.jump, 1)
         else:
             self.wait_time -= g.delta_time
-        super().update_frame_index()
-        super().idle()
+        super().update()
+        super().apply_gravity()
 
+class Enemy_Walker(Enemy):
+    def __init__ (self, sprite='sprites/enemies/left/mouse', pos = (WIDTH/2, HEIGHT/2)):
+        super().__init__(sprite='sprites/enemies/left/mouse', pos=pos)
+        self.speed = 7
 
+    def update(self):
+        if not super().is_visible():
+            return
+        super().update()
+        direction = 1 if self.facing_right else -1
+        dx = direction * self.speed
+
+        if not super().is_ground_ahead() or super().will_collide(dx, 0):
+            self.facing_right = not self.facing_right
+            direction *= -1
+            dx = direction * self.speed
+
+        if not self.will_collide(dx, 0):
+            self.x += dx
+    
 class Terrain(Actor):
     def __init__ (self, sprite, type, pos:tuple=None, damage=0):
         super().__init__(sprite, pos)
