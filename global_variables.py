@@ -26,5 +26,6 @@ world_objects = {
     'floors': [],
     'ceilings': [],
     'hazards': [],
+    'decorations': [],
     'parallax':{1:[], 2:[], 3:[]}
 }

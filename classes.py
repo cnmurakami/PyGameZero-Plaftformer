@@ -508,7 +508,7 @@ class Terrain(Actor):
 class Decoration(Actor):
     def __init__ (self, sprite, pos:tuple=None):
         super().__init__(sprite, pos)
-        g.world_objects['tiles'].append(self)
+        g.world_objects['decorations'].append(self)
 
     def get_rect(self, offset_x=g.offset_x, offset_y=g.offset_y):
         screen_x = self.x - offset_x
@@ -587,6 +587,9 @@ class Camera():
         for geometry in g.world_objects['tiles']:
             geometry.x += g.offset_x
             geometry.y += g.offset_y
+        for item in g.world_objects['decorations']:
+            item.x += g.offset_x
+            item.y += g.offset_y
     
     def offset_player(self):
         self.player.x += g.offset_x

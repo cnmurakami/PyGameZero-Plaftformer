@@ -34,6 +34,7 @@ def load_level(level):
     g.world_objects['floors'] = []
     g.world_objects['ceilings'] = []
     g.world_objects['hazards'] = []
+    g.world_objects['decorations'] = []
     g.world_objects['camera'] = None
     for key in g.world_objects['parallax'].keys():
         g.world_objects['parallax'][key] = []
@@ -55,6 +56,7 @@ def on_mouse_down(pos):
         try:
             for item in g.world_objects['tiles']:
                 if item.collidepoint(pos):
+                    print(type(item))
                     print(item.type)
                     print(item.damage)
             if g.world_objects['player'].collidepoint(pos):
@@ -71,7 +73,7 @@ def on_mouse_down(pos):
 
 def on_key_down(key):
     global state, state_ready
-    if (key == keys.RETURN or key == keys.SPACE) and state == 'game_over':
+    if (key == keys.RETURN or key == keys.SPACE) and state in ['game_over', 'title']:
         state = 'running'
         state_ready = False
     if key == keys.ESCAPE:
@@ -157,6 +159,8 @@ def draw():
         screen.clear()
         draw_background()
         for actor in g.world_objects['tiles']:
+            actor.draw()
+        for actor in g.world_objects['decorations']:
             actor.draw()
         for actor in g.world_objects['enemies']:
             actor.draw()
