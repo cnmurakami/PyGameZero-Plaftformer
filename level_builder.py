@@ -6,7 +6,7 @@ import global_variables as g
 from classes import Player, Enemy_Jumper, Terrain, Parallax, Enemy_Walker, Decoration
 
 def define_boundaries(level):
-    with open(f'level_data/level_{level}_layout.txt', 'r') as file:
+    with open(f'level_data/{level}/layout.txt', 'r') as file:
         lines = file.readlines()
         g.limit_x = len(lines[0].strip())*g.tile_size
         g.limit_y = len(lines)*g.tile_size        
@@ -19,7 +19,7 @@ def draw_background():
 
 def build_background(level):
     sprites = []
-    with open (f'level_data/level_{level}_background.txt', 'r') as file:
+    with open (f'level_data/{level}/background.txt', 'r') as file:
         for i in file.readlines():
             sprites.append(i.strip())
     for pos_y in range(-g.background_tile_size, g.limit_y+g.background_tile_size+1, g.background_tile_size):
@@ -44,7 +44,7 @@ def build_background(level):
 
 def get_tile_sources(level):
     tile_dict = {}
-    with open (f'level_data/level_{level}_tiles.txt', 'r') as file:
+    with open (f'level_data/{level}/tiles.txt', 'r') as file:
         for line in file.readlines():
             if len(line.strip())>0:
                 key, value = line.split("=")
@@ -58,7 +58,7 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
     tile_dict = get_tile_sources(level_number)
     map = []
     player = None
-    with open (f'level_data/level_{level_number}_layout.txt', 'r') as file:
+    with open (f'level_data/{level_number}/layout.txt', 'r') as file:
         for line in file.readlines():
             map.append(line.strip())
     

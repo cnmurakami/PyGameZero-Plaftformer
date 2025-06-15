@@ -659,10 +659,11 @@ class Menu():
         self.state = 'main'
         self.sound_image = 'ui/white/audio_'
         self.music_image = 'ui/white/music_'
+        self.exit_image = 'ui/white/exit_custom'
         self.sound_icon = Actor(self.sound_image+'on', (WIDTH/2 + 100, HEIGHT/3*2))
         self.music_icon = Actor(self.music_image+'on', (WIDTH/2 - 100, HEIGHT/3*2))
+        self.exit_icon = Actor(self.exit_image, (95, HEIGHT-45))
         g.world_objects['menu'] = self
-        self.start_button = Actor
 
     def update(self):
         sound_state = 'on' if g.sound else 'off'
@@ -673,3 +674,4 @@ class Menu():
     def draw(self):
         self.sound_icon.draw()
         self.music_icon.draw()
+        self.exit_icon.draw()

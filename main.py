@@ -12,6 +12,8 @@ from settings import *
 from level_builder import create_level, draw_background
 import global_variables as g
 
+# ------------------ VARIABLES ----------------------
+
 states = ['running', 'paused', 'win', 'title', 'game_over']
 state = 'title' if not DEBUG else 'running'
 g.music = g.music if not DEBUG else False
@@ -28,6 +30,8 @@ next_button = Actor('ui/white/continue', (WIDTH/2, HEIGHT/2))
 ufo = Actor('sprites/characters/ufo/ship_green_manned', pos = (-WIDTH, -HEIGHT))
 ufo_beam = Actor('sprites/characters/ufo/laser_blue2', pos = (-WIDTH, -HEIGHT))
 level_text_actor = Actor(g.player_sprite.replace('/right/', '/hurt/')+'_idle', pos = (-WIDTH, -HEIGHT))
+
+# ------------------ BUILDERS ----------------------
 
 def main_menu():
     global state_ready
@@ -51,7 +55,10 @@ def load_level(level):
     player = create_level(level, 'sprites/tiles/terrain_grass_block_top')
     g.global_player_x, g.global_player_y = g.world_objects['player'].pos
     camera = Camera()
-    music.play(f'stage_{level}')
+    try:
+        music.play(f'stage_{level}')
+    except:
+        music.play(f'stage_1')
     level_text_actor.x = WIDTH/2
     level_text_actor.y = -g.tile_size*2
     animate(level_text_actor, tween='decelerate', duration=2, pos=(level_text_actor.x, HEIGHT/2),
@@ -93,7 +100,7 @@ def ufo_leave():
     ufo_beam.image = empty_image
     animate(ufo, tween='bounce_start', duration=1, pos=(ufo.x, -g.tile_size*2))
 
-  
+# ------------------ INPUTS ----------------------
 
 def on_mouse_down(pos):
     global state, state_ready
@@ -115,7 +122,7 @@ def on_mouse_down(pos):
         global level
         level += 1
         try:
-            with open(f'level_data/level_{level}_layout.txt', 'r') as f:
+            with open(f'level_data/{level}/layout.txt', 'r') as f:
                 pass
             state = 'running'
         except:
@@ -126,6 +133,8 @@ def on_mouse_down(pos):
         g.music = not g.music
     if menu.sound_icon.collidepoint(pos) and state in ['paused', 'title']:
         g.sound = not g.sound
+    if menu.exit_icon.collidepoint(pos) and state in ['paused', 'title']:
+        exit()
 
 def on_key_down(key):
     global state, state_ready
@@ -146,6 +155,8 @@ def on_key_down(key):
             g.show_osd = not g.show_osd
         else:
             g.show_box = not g.show_box
+
+# ------------------ ENGINE ----------------------
 
 def update(dt):
     global state, state_ready
@@ -211,9 +222,6 @@ def update(dt):
         g.world_objects['camera'].update()
     if state == 'paused':
         return
-
-
-
 
 def draw():
     global state
