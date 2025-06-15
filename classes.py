@@ -475,7 +475,7 @@ class Enemy_Walker(Enemy):
             self.facing_right = not self.facing_right
             direction *= -1
             dx = direction * self.speed
-            if g.sound:
+            if g.sound and WIDTH > self.x > 0 and HEIGHT > self.y > 0:
                 sounds.sfx_bump.play()
 
         if not super().will_collide(dx, 0):
