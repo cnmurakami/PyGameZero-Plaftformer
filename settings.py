@@ -14,3 +14,4 @@ TITLE = settings['TITLE']
 WIDTH = settings['WIDTH']
 HEIGHT = settings['HEIGHT']
 DEBUG = bool(settings['DEBUG'])
+font = settings['FONT']

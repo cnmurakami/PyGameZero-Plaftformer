@@ -2,7 +2,7 @@
 import pgzrun
 from pgzero.actor import Actor
 from pgzero.keyboard import keyboard
-from pgzero.builtins import sounds, clock, music
+from pgzero.builtins import sounds, clock, music, animate
 from random import randint
 from pygame import Rect
 
@@ -12,7 +12,7 @@ from settings import *
 from level_builder import create_level, draw_background
 import global_variables as g
 
-states = ['running', 'paused', 'winning', 'title', 'game_over']
+states = ['running', 'paused', 'win', 'title', 'game_over']
 state = 'title' if not DEBUG else 'running'
 g.music = g.music if not DEBUG else False
 substate = ''
@@ -22,12 +22,22 @@ level_components = []
 
 menu = Menu()
 music.play('menu')
-start_button = Actor('ui/black/button_start', (WIDTH/2, HEIGHT/2))
-restart_button = Actor('ui/black/return', (WIDTH/2, HEIGHT/2))
+start_button = Actor('ui/white/start', (WIDTH/2, HEIGHT/2))
+restart_button = Actor('ui/white/continue', (WIDTH/2, HEIGHT/2))
+next_button = Actor('ui/white/continue', (WIDTH/2, HEIGHT/2))
+ufo = Actor('sprites/characters/ufo/ship_green_manned', pos = (-WIDTH, -HEIGHT))
+ufo_beam = Actor('sprites/characters/ufo/laser_blue2', pos = (-WIDTH, -HEIGHT))
+level_text_actor = Actor(g.player_sprite.replace('/right/', '/hurt/')+'_idle', pos = (-WIDTH, -HEIGHT))
+
+def main_menu():
+    global state_ready
+    music.play('menu')
+    state_ready = True
 
 def load_level(level):
     global state_ready
     g.world_objects['player'] = None
+    g.world_objects['exit'] = None
     g.world_objects['enemies'] = []
     g.world_objects['tiles'] = []
     g.world_objects['walls'] = []
@@ -42,13 +52,48 @@ def load_level(level):
     g.global_player_x, g.global_player_y = g.world_objects['player'].pos
     camera = Camera()
     music.play(f'stage_{level}')
+    level_text_actor.x = WIDTH/2
+    level_text_actor.y = -g.tile_size*2
+    animate(level_text_actor, tween='decelerate', duration=2, pos=(level_text_actor.x, HEIGHT/2),
+        on_finished = lambda: animate(level_text_actor, tween='accelerate', duration=1, pos=(level_text_actor.x, HEIGHT+g.tile_size*2)
+        ))
     state_ready = True
 
 def game_over():
     global state_ready
     g.world_objects['player'].death_animation()
     state_ready = True
-    
+
+def win():
+    global state_ready, ufo
+    music.play('win')
+    player = g.world_objects['player']
+    player.win_animation()
+    ufo.x = player.x
+    ufo.y = -g.tile_size-2
+    animate(ufo, tween='decelerate', duration = 3, pos = (player.x, player.y-g.tile_size*1.5))
+    clock.schedule_unique(win_animation, 3)
+    state_ready = True
+
+def win_animation():
+    if state != 'win':
+        return
+    player = g.world_objects['player']
+    ufo_beam.x = player.x
+    ufo_beam.bottom = player.bottom
+    animate(player, tween='linear', duration=1, pos=(player.x, ufo.y))
+    clock.schedule_unique(ufo_leave, 1)
+
+def ufo_leave():
+    if state != 'win':
+        return
+    player = g.world_objects['player']
+    empty_image = player.sprite.replace('/right/', '/hurt/').replace('/left/', '/hurt/')+'idle'
+    player.image = empty_image
+    ufo_beam.image = empty_image
+    animate(ufo, tween='bounce_start', duration=1, pos=(ufo.x, -g.tile_size*2))
+
+  
 
 def on_mouse_down(pos):
     global state, state_ready
@@ -63,12 +108,23 @@ def on_mouse_down(pos):
                 g.world_objects['player'].get_hurt(3)
         except:
             pass
-    if start_button.collidepoint(pos) or restart_button.collidepoint(pos):
+    if (start_button.collidepoint(pos) or restart_button.collidepoint(pos)) and state in ['title', 'game_over']:
         state = 'running'
         state_ready = False
-    if menu.music_icon.collidepoint(pos):
+    if next_button.collidepoint(pos) and state == 'win':
+        global level
+        level += 1
+        try:
+            with open(f'level_data/level_{level}_layout.txt', 'r') as f:
+                pass
+            state = 'running'
+        except:
+            level = 1
+            state = 'title'
+        state_ready = False
+    if menu.music_icon.collidepoint(pos) and state in ['paused', 'title']:
         g.music = not g.music
-    if menu.sound_icon.collidepoint(pos):
+    if menu.sound_icon.collidepoint(pos) and state in ['paused', 'title']:
         g.sound = not g.sound
 
 def on_key_down(key):
@@ -95,6 +151,11 @@ def update(dt):
     global state, state_ready
     menu.update()
     music.set_volume(g.music)
+    if state == 'win':
+        if state_ready:
+            return
+        if not state_ready:
+            win()
     if state == 'game_over':
         if state_ready:
             return
@@ -103,7 +164,10 @@ def update(dt):
             game_over()
         return
     if state == 'title':
-        return
+        if state_ready:
+            return
+        if not state_ready:
+            main_menu()
     if state == 'running':
         if not state_ready:
             load_level(level)
@@ -113,6 +177,9 @@ def update(dt):
         g.delta_time = dt
         if g.world_objects['player'].check_death():
             state = 'game_over'
+            state_ready = False
+        if g.world_objects['player'].check_win():
+            state = 'win'
             state_ready = False
         g.world_objects['player'].update()
         for enemy in g.world_objects['enemies']:
@@ -128,17 +195,18 @@ def update(dt):
                 g.world_objects['camera'].can_move_up=True
                 g.world_objects['camera'].can_move_down=True
                 g.world_objects['player'].pos = (WIDTH/2, HEIGHT/2)
-                g.world_objects['player'].get_hurt(0)
-            if keyboard.right:
-                g.offset_x-=10
-                g.world_objects['player'].facing_right = True
-            if keyboard.left:
-                g.world_objects['player'].facing_right = False
-                g.offset_x+=10
-            if keyboard.up:
-                g.offset_y+=10
-            if keyboard.down:
-                g.offset_y-=10
+                g.world_objects['player'].invincible = True
+                if keyboard.right:
+                    g.offset_x-=10
+                    g.world_objects['player'].facing_right = True
+                if keyboard.left:
+                    g.world_objects['player'].facing_right = False
+                    g.offset_x+=10
+                if keyboard.up:
+                    g.offset_y+=10
+                if keyboard.down:
+                    g.offset_y-=10
+                g.world_objects['player'].invincible = False
             g.step = False
         g.world_objects['camera'].update()
     if state == 'paused':
@@ -152,10 +220,10 @@ def draw():
     if state == 'title':
         screen.clear()
         screen.fill((255,255,255))
-        screen.draw.text('ZERO PLATFORMER\nGAME DEMO', centerx=WIDTH/2, centery=HEIGHT/4, fontsize=120, color = 'black')
+        screen.draw.text('ZERO PLATFORMER\nGAME DEMO', centerx=WIDTH/2, centery=HEIGHT/4, fontname = font, fontsize=80, color = (200,255,255), owidth = 3, ocolor = 'black')
         start_button.draw()
         menu.draw()
-    if state in ['running', 'paused', 'game_over'] and state_ready:
+    if state in ['running', 'paused', 'game_over', 'win'] and state_ready:
         screen.clear()
         draw_background()
         for actor in g.world_objects['tiles']:
@@ -171,6 +239,7 @@ def draw():
             if i > g.world_objects['player'].health:
                 img += '_empty'
             screen.blit(img, (40*i+40, 20))
+        screen.draw.text(f'LEVEL {level}', centerx=level_text_actor.x, centery=level_text_actor.y, fontname = font, fontsize=120, color = (200,255,255), owidth = 3, ocolor = 'black')
         if DEBUG:
             if g.show_osd:
                 debug_msgs = [
@@ -207,9 +276,14 @@ def draw():
                 screen.draw.rect(g.world_objects['camera'].outer_rect, 'purple')
                 screen.draw.rect(g.world_objects['camera'].inner_rect, 'purple')
         if state == 'paused':
-            screen.draw.text('PAUSED', centerx=WIDTH/2, centery=HEIGHT/3, fontsize=120, color = 'black')
+            screen.draw.text('PAUSED', centerx=WIDTH/2, centery=HEIGHT/3, fontname = font, fontsize=120, color = (200,255,255), owidth = 3, ocolor = 'black')
             menu.draw()
         if state == 'game_over':
-            screen.draw.text('GAME OVER', centerx=WIDTH/2, centery=HEIGHT/4, fontsize=120, color = 'black')
+            screen.draw.text('GAME OVER', centerx=WIDTH/2, centery=HEIGHT/4, fontname = font, fontsize=120, color = (200,255,255), owidth = 3, ocolor = 'black')
             restart_button.draw()
-            menu.draw()
+        if state == 'win':
+            ufo_beam.draw()
+            g.world_objects['player'].draw()
+            ufo.draw()
+            screen.draw.text('SUCCESS', centerx=WIDTH/2, centery=HEIGHT/4, fontname = font, fontsize=120, color = (200,255,255), owidth = 3, ocolor = 'black')
+            next_button.draw()

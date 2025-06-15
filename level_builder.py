@@ -73,6 +73,12 @@ def create_level(level_number, ground_asset, wall_asset=None) -> Player:
             placement = (j*g.tile_size, i*g.tile_size)
             if map[i][j] in tile_dict.keys():
                 tile = Decoration(tile_dict[map[i][j]], placement)
+                continue
+            if map[i][j] == 'f':
+                tile = 'sign_exit'
+                type = 'exit'
+                actor = Terrain('sprites/tiles/'+tile, type, placement)
+                continue
             if map[i][j] == '=':
                 tile = 'center'
                 type = 'ceiling'

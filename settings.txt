@@ -1,8 +1,5 @@
 DEBUG = 0
+FONT = atop
 TITLE = My Game Window
 WIDTH = 1280
 HEIGHT = 640
-LEFT = a
-RIGHT = d
-UP = w
-DOWN = s

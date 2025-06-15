@@ -20,6 +20,8 @@ music = True
 player_sprite = 'sprites/characters/right/character_purple'
 world_objects = {
     'player': None,
+    'camera': None,
+    'exit': None,
     'enemies': [],
     'tiles': [],
     'walls': [],

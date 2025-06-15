@@ -173,7 +173,6 @@ class Player(Actor):
             if not supported:
                 self.grounded = False 
 
-    
     def get_hurt(self, health_loss = 1, hurt_side = '', override = False):
         if override:
             self.health -= health_loss
@@ -258,6 +257,21 @@ class Player(Actor):
         angle = 180 if self.facing_right else -180
         clock.schedule(self.death_back_down, duration)
         animate(self, duration=duration, tween='decelerate', pos = (self.x, g.tile_size*2), angle = angle)
+
+    def check_win(self):
+        if self.get_rect().colliderect(g.world_objects['exit'].get_rect()) and self.health > 0:
+            return True
+        return False
+
+    def win_animation(self):
+        if g.sound:
+            sounds.sfx_jump_high.play()
+        self.invisible = False
+        self.grounded = False
+        self.can_move = False
+        self.invincible = True
+        self.image = self.sprite+'front'
+        self.bottom = g.world_objects['exit'].bottom
         
     def update(self):
         self.hurt_animation()
@@ -493,8 +507,12 @@ class Terrain(Actor):
         super().__init__(sprite, pos)
         self.type = type
         self.damage = damage
-        g.world_objects[type].append(self)
-        g.world_objects['tiles'].append(self)
+        if type == 'exit':
+            g.world_objects['exit'] = self
+            g.world_objects['decorations'].append(self)
+        else:
+            g.world_objects[type].append(self)
+            g.world_objects['tiles'].append(self)
 
     def get_rect(self, offset_x=g.offset_x, offset_y=g.offset_y):
         screen_x = self.x - offset_x
@@ -639,8 +657,8 @@ class Camera():
 class Menu():
     def __init__(self):
         self.state = 'main'
-        self.sound_image = 'ui/black/audio_'
-        self.music_image = 'ui/black/music_'
+        self.sound_image = 'ui/white/audio_'
+        self.music_image = 'ui/white/music_'
         self.sound_icon = Actor(self.sound_image+'on', (WIDTH/2 + 100, HEIGHT/3*2))
         self.music_icon = Actor(self.music_image+'on', (WIDTH/2 - 100, HEIGHT/3*2))
         g.world_objects['menu'] = self
