@@ -30,6 +30,8 @@ next_button = Actor('ui/white/continue', (WIDTH/2, HEIGHT/2))
 ufo = Actor('sprites/characters/ufo/ship_green_manned', pos = (-WIDTH, -HEIGHT))
 ufo_beam = Actor('sprites/characters/ufo/laser_blue2', pos = (-WIDTH, -HEIGHT))
 level_text_actor = Actor(g.player_sprite.replace('/right/', '/hurt/')+'_idle', pos = (-WIDTH, -HEIGHT))
+title_sprite_a = Actor('sprites/characters/right/character_purple_hit', (WIDTH/4, HEIGHT/2+100))
+title_sprite_b = Actor('sprites/characters/ufo/ship_green_manned', (WIDTH/4*3, HEIGHT/2-100))
 
 # ------------------ BUILDERS ----------------------
 
@@ -175,10 +177,12 @@ def update(dt):
             game_over()
         return
     if state == 'title':
-        if state_ready:
-            return
         if not state_ready:
             main_menu()
+        if state_ready:
+            title_sprite_a.angle+=3
+            title_sprite_b.angle-=1
+            return
     if state == 'running':
         if not state_ready:
             load_level(level)
@@ -227,8 +231,10 @@ def draw():
     global state
     if state == 'title':
         screen.clear()
-        screen.fill((255,255,255))
-        screen.draw.text('ZERO PLATFORMER\nGAME DEMO', centerx=WIDTH/2, centery=HEIGHT/4, fontname = font, fontsize=80, color = (200,255,255), owidth = 3, ocolor = 'black')
+        screen.fill((180,200,200))
+        title_sprite_a.draw()
+        title_sprite_b.draw()
+        screen.draw.text('ZERO PLATFORMER\nGAME DEMO', centerx=WIDTH/2, centery=HEIGHT/5, fontname = font, fontsize=80, color = (200,255,255), owidth = 3, ocolor = 'black')
         start_button.draw()
         menu.draw()
     if state in ['running', 'paused', 'game_over', 'win'] and state_ready:
