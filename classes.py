@@ -519,8 +519,12 @@ class Projectile(Enemy):
         self.active = True
         self.facing_right = direction == 'r'
 
+    def get_rect(self):
+        return Rect((self.x - self.width / 4, self.bottom - self.height / 1.5),
+                    (self.width / 2, self.height / 3))
+
+
     def destroy(self):
-        print(self)
         g.world_objects['enemies'].remove(self)
         self.image = 'sprites/characters/hurt/character_purple_idle'
         self.active = False
