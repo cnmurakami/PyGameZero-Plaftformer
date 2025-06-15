@@ -467,6 +467,8 @@ class Enemy_Jumper(Enemy):
         
     def jump(self):
         super().jump()
+        if g.sound:
+            sounds.sfx_frog_jump.play()
         self.jumping = False
 
     def update(self):
@@ -498,6 +500,8 @@ class Enemy_Walker(Enemy):
             self.facing_right = not self.facing_right
             direction *= -1
             dx = direction * self.speed
+            if g.sound:
+                sounds.sfx_bump.play()
 
         if not self.will_collide(dx, 0):
             self.x += dx
