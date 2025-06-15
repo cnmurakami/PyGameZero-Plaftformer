@@ -18,12 +18,13 @@ pgzrun main.py
 
 ## Controls
 
-```shell
-A/D = Moves horizontally
-W = Jumps
-ESC = Pauses
-Enter/Space = Can be used in menus instead of mouse to play, retry or continue
-```
+| key | action |
+|-|-|
+|A/D or LEFT/RIGHT|Moves horizontally|
+|W or SPACE or UP|Jumps|
+|ESC|Pause/Resume
+|ENTER | Can be used in menus instead of mouse to play, retry or continue
+
 
 ## To test/debug
 
@@ -33,9 +34,10 @@ Changing DEBUG to 1 in settings.txt will show debug informations on screen, and 
 
 | key | action | description |
 | --- | ------ | ----------- |
-| TAB | Toggle debug info | Toggle on-screen debug information |
+| TAB | Toggle hitbox | Toggle on-screen hitbox visualization |
+| CTRL+TAB | Toggle debug info | Toggle on-screen debug information |
 | P | Pause frame | Pauses frame. Still captures input, does not show menu and enables frame by frame.
-| SPACE | Advance frame | While paused (P), pressing SPACE will advance one frame. Actions can be performed even when paused |
+| BACKSPACE | Advance frame | While paused (P), pressing BACKSPACE will advance one frame. Actions can be performed even when paused |
 | ARROWS | Move camera | Move camera freely. Will place the player in the center of camera |
 
 ### Settings file

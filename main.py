@@ -144,19 +144,19 @@ def on_mouse_down(pos):
 
 def on_key_down(key):
     global state, state_ready
-    if (key == keys.RETURN or key == keys.SPACE) and state in ['game_over', 'title']:
+    if (key == keys.RETURN) and state in ['game_over', 'title']:
         state = 'running'
         state_ready = False
-    if (key == keys.RETURN or key == keys.SPACE) and state == 'win':
+    if (key == keys.RETURN) and state == 'win':
         check_next_level()
     if key == keys.ESCAPE:
         if state in ['running', 'paused']:
             state = 'paused' if state=='running' else 'running'
-    if key == keys.P:
+    if key == keys.P and DEBUG:
         g.paused = not g.paused
-    if key == keys.SPACE and DEBUG:
+    if key == keys.BACKSPACE and DEBUG:
         g.step = True
-    if key == keys.W:
+    if (key == keys.W or key == keys.SPACE or key == keys.UP) and state == 'running' and state_ready:
         g.world_objects['player'].jump()
     if key == keys.TAB:
         if keyboard.lctrl:
@@ -205,9 +205,9 @@ def update(dt):
         g.world_objects['player'].update()
         for enemy in g.world_objects['enemies']:
             enemy.update()
-        if keyboard.d:
+        if keyboard.d or keyboard.right:
             g.world_objects['player'].move('r')
-        if keyboard.a:
+        if keyboard.a or keyboard.left:
             g.world_objects['player'].move('l')
         if DEBUG:
             if keyboard.right or keyboard.up or keyboard.down or keyboard.left:
