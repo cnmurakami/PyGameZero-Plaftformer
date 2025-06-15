@@ -5,6 +5,7 @@ from pgzero.builtins import sounds, clock, animate, music
 from pygame import Rect
 import global_variables as g
 
+#-------------- Player -----------------
 class Player(Actor):
     def __init__ (self, sprite, pos:tuple = None):
         super().__init__(sprite+'_idle', pos)
@@ -281,6 +282,7 @@ class Player(Actor):
         self.update_frame_index()
         self.idle()
 
+#-------------- Enemies -----------------
 class Enemy(Actor):
     def __init__(self, sprite, pos):
         super().__init__(sprite + '_idle', pos)
@@ -420,6 +422,8 @@ class Enemy(Actor):
         self.turn_around()
         self.update_frame_index()
         self.idle()
+
+
 class Enemy_Jumper(Enemy):
     def __init__ (self, sprite = 'sprites/enemies/left/frog', pos = (WIDTH/2, HEIGHT/2)):
         super().__init__(sprite, pos=pos)
@@ -454,6 +458,7 @@ class Enemy_Jumper(Enemy):
         super().update()
         super().apply_gravity()
 
+
 class Enemy_Walker(Enemy):
     def __init__ (self, sprite='sprites/enemies/left/mouse', pos = (WIDTH/2, HEIGHT/2)):
         super().__init__(sprite, pos=pos)
@@ -475,6 +480,7 @@ class Enemy_Walker(Enemy):
 
         if not super().will_collide(dx, 0):
             self.x += dx
+
 
 class Enemy_Shooter(Enemy):
     def __init__(self, sprite='sprites/enemies/left/barnacle', pos=(WIDTH / 2, HEIGHT / 2)):
@@ -502,6 +508,7 @@ class Enemy_Shooter(Enemy):
             clock.schedule(self.shoot, 1)
         else:
             self.wait_time -= g.delta_time
+
 
 class Projectile(Enemy):
     def __init__ (self, sprite='sprites/enemies/left/fireball', pos = (WIDTH/2, HEIGHT/2), direction = 'l'):
@@ -533,6 +540,8 @@ class Projectile(Enemy):
         else:
             self.x += dx
 
+
+#-------------- Stage -----------------
 class Terrain(Actor):
     def __init__ (self, sprite, type, pos:tuple=None, damage=0):
         super().__init__(sprite, pos)
@@ -553,6 +562,7 @@ class Terrain(Actor):
             (g.tile_size, g.tile_size)
         )
 
+
 class Decoration(Actor):
     def __init__ (self, sprite, pos:tuple=None):
         super().__init__(sprite, pos)
@@ -565,6 +575,7 @@ class Decoration(Actor):
             (screen_x - g.tile_size/2, screen_y - g.tile_size/2),
             (g.tile_size, g.tile_size)
         )
+
 
 class Parallax(Actor):
     def __init__ (self, sprite, level, pos:tuple=None):
@@ -584,6 +595,7 @@ class Parallax(Actor):
             self.x -=  self.force_x * 0.5
 
 
+#-------------- MISC -----------------
 class Camera():
     def __init__(self):
         self.player:Player = g.world_objects['player']

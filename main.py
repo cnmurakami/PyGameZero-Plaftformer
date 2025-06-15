@@ -2,9 +2,8 @@
 import pgzrun
 from pgzero.actor import Actor
 from pgzero.keyboard import keyboard
-from pgzero.builtins import sounds, clock, music, animate
-from random import randint
-from pygame import Rect
+from pgzero.builtins import clock, music, animate
+
 
 # local imports
 from classes import Camera, Menu
@@ -155,7 +154,7 @@ def on_key_down(key):
             state = 'paused' if state=='running' else 'running'
     if key == keys.P:
         g.paused = not g.paused
-    elif key == keys.SPACE and DEBUG:
+    if key == keys.SPACE and DEBUG:
         g.step = True
     if key == keys.W:
         g.world_objects['player'].jump()

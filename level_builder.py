@@ -1,7 +1,5 @@
 from settings import WIDTH, HEIGHT
-from pgzero.actor import Actor
 from pgzero.builtins import sounds
-from pygame import Rect
 import global_variables as g
 from classes import Player, Enemy_Jumper, Terrain, Parallax, Enemy_Walker, Enemy_Shooter, Decoration
 
@@ -41,7 +39,6 @@ def build_background(level):
                 parallax = 3
             tile = Parallax(sprite, parallax, (x, pos_y))
 
-
 def get_tile_sources(level):
     tile_dict = {}
     with open (f'level_data/{level}/tiles.txt', 'r') as file:
@@ -52,7 +49,6 @@ def get_tile_sources(level):
                 value = value.strip()
                 tile_dict[key] = value
     return tile_dict
-
 
 def create_level(level_number, ground_asset, wall_asset=None) -> Player:
     tile_dict = get_tile_sources(level_number)
