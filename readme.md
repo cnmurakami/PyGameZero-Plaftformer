@@ -92,4 +92,6 @@ Musics from [Sekuora in pixabay](https://pixabay.com/users/sekuora-40269569/).
 
 Font from [GraphicSauce in 1001fonts](https://www.1001fonts.com/users/graphicsauceco/).
 
+Pygame Zero framework made by [Daniel Pope](https://pygame-zero.readthedocs.io/en/stable/index.html)
+
 All credits goes to the authors.
