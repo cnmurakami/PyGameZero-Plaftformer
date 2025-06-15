@@ -25,7 +25,7 @@ level_components = []
 menu = Menu()
 music.play('menu')
 start_button = Actor('ui/white/start', (WIDTH/2, HEIGHT/2))
-restart_button = Actor('ui/white/continue', (WIDTH/2, HEIGHT/2))
+restart_button = Actor('ui/white/retry', (WIDTH/2, HEIGHT/2))
 next_button = Actor('ui/white/continue', (WIDTH/2, HEIGHT/2))
 ufo = Actor('sprites/characters/ufo/ship_green_manned', pos = (-WIDTH, -HEIGHT))
 ufo_beam = Actor('sprites/characters/ufo/laser_blue2', pos = (-WIDTH, -HEIGHT))
@@ -102,6 +102,20 @@ def ufo_leave():
     ufo_beam.image = empty_image
     animate(ufo, tween='bounce_start', duration=1, pos=(ufo.x, -g.tile_size*2))
 
+def check_next_level():
+    global level, state, state_ready
+    if state != 'win':
+        return
+    level += 1
+    try:
+        with open(f'level_data/{level}/layout.txt', 'r') as f:
+            pass
+        state = 'running'
+    except:
+        level = 1
+        state = 'title'
+    state_ready = False
+
 # ------------------ INPUTS ----------------------
 
 def on_mouse_down(pos):
@@ -121,16 +135,7 @@ def on_mouse_down(pos):
         state = 'running'
         state_ready = False
     if next_button.collidepoint(pos) and state == 'win':
-        global level
-        level += 1
-        try:
-            with open(f'level_data/{level}/layout.txt', 'r') as f:
-                pass
-            state = 'running'
-        except:
-            level = 1
-            state = 'title'
-        state_ready = False
+        check_next_level()
     if menu.music_icon.collidepoint(pos) and state in ['paused', 'title']:
         g.music = not g.music
     if menu.sound_icon.collidepoint(pos) and state in ['paused', 'title']:
@@ -143,6 +148,8 @@ def on_key_down(key):
     if (key == keys.RETURN or key == keys.SPACE) and state in ['game_over', 'title']:
         state = 'running'
         state_ready = False
+    if (key == keys.RETURN or key == keys.SPACE) and state == 'win':
+        check_next_level()
     if key == keys.ESCAPE:
         if state in ['running', 'paused']:
             state = 'paused' if state=='running' else 'running'
