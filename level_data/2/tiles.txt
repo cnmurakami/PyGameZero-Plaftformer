@@ -1,0 +1,10 @@
+terrain = sprites/tiles/terrain_dirt_block_
+single_block = sprites/tiles/terrain_dirt_horizontal_
+hazard = sprites/tiles/spike
+> = sprites/tiles/sign_right
+0 = sprites/tiles/sign_walk
+^ = sprites/tiles/sign_jump
+? = sprites/tiles/sign
+/ = sprites/tiles/sign_hurt
+v = sprites/tiles/sign_hazard
+| = sprites/tiles/sign_pause

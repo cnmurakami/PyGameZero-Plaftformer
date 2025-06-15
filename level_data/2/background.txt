@@ -1,0 +1,5 @@
+sprites/backgrounds/background_solid_sky
+sprites/backgrounds/background_clouds
+sprites/backgrounds/background_color_mushrooms
+sprites/backgrounds/background_color_mushrooms_b
+sprites/backgrounds/background_solid_dirt

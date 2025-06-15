@@ -22,7 +22,7 @@ def build_background(level):
     with open (f'level_data/{level}/background.txt', 'r') as file:
         for i in file.readlines():
             sprites.append(i.strip())
-    for pos_y in range(-g.background_tile_size, g.limit_y+g.background_tile_size+1, g.background_tile_size):
+    for pos_y in range(g.limit_y+g.background_tile_size+1, -g.background_tile_size, -g.background_tile_size):
         for x in range(-g.background_tile_size, g.limit_x+g.background_tile_size+1, g.background_tile_size):
             if pos_y < 0:
                 sprite = sprites[0]

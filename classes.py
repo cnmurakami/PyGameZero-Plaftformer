@@ -22,7 +22,7 @@ class Player(Actor):
         self.falling_frames = 0
         self.velocity_y = 0
         self.gravity = g.gravity
-        self.jump_force = -22
+        self.jump_force = -23
         self.max_fall_speed = 20
         self.health = 3
         self.invincible = False
