@@ -38,6 +38,10 @@ Changing DEBUG to 1 in settings.txt will show debug informations on screen, and 
 | SPACE | Advance frame | While paused (P), pressing SPACE will advance one frame. Actions can be performed even when paused |
 | ARROWS | Move camera | Move camera freely. Will place the player in the center of camera |
 
+### Settings file
+
+In the settings.txt, you can set DEBUG to 1 to use these functions. Aditionally, resolution, default font and window title can be set. Note that if title is different from the provided one, watch_pgzero will not detect window changes.
+
 ## Generating maps
 
 The code automatically generates level based on txt information.
